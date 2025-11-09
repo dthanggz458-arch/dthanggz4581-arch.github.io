@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adlink Gallery</title>
+    <link rel="icon" type="image/png"
+        href="https://em-content.zobj.net/thumbs/120/apple/354/no-one-under-eighteen_1f51e.png">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body,
+        html {
+            font-family: "Inter", sans-serif;
+            min-height: 100vh;
+            background: #111;
+            color: #fff;
+        }
+
+        /* Age Gate */
+        #age-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        #age-gate.hidden {
+            display: none;
+        }
+
+        #age-gate h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .age-btn {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .age-btn:hover,
+        .age-btn:focus {
+            transform: scale(1.05);
+            outline: none;
+        }
+
+        .age-yes {
+            background: #4caf50;
+            color: #fff;
+        }
+
+        .age-no {
+            background: #f44336;
+            color: #fff;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            color: #4caf50;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Grids */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .img-card {
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: #222;
+            cursor: pointer;
+        }
+
+        .img-card img {
+            width: 100%;
+            display: block;
+        }
+
+        .img-card p {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            text-align: center;
+            padding: 5px;
+            font-size: 0.9em;
+        }
+
+        /* Ads */
+        .ad-banner {
+            margin: 20px 0;
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        /* Back button */
+        #back-home {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #4caf50;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        #back-home:hover {
+            background: #45a049;
+        }
+
+        @media(max-width:600px) {
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Age Gate -->
+    <div id="age-gate" role="dialog" aria-modal="true">
+        <h2>Enter your age</h2>
+        <input type="number" id="age-input" placeholder="Enter your age" min="1"
+            style="padding:10px; font-size:1em; border-radius:5px; margin-bottom:15px; border:none;">
+        <div>
+            <button class="age-btn age-yes" id="btn-verify">Verify</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container" id="site-container">
+        <!-- Navigation -->
+        <nav>
+            <a data-category="regular">Regular</a>
+            <a data-category="chubby">Chubby</a>
+            <a data-category="thin">Thin</a>
+        </nav>
+
+        <!-- Home / Previews -->
+        <div id="home">
+            <h2>Featured Categories</h2>
+            <div class="grid" id="category-preview"></div>
+            <div class="ad-banner" id="home-ad">
+                <p>[Ad Banner Placeholder]</p>
+            </div>
+        </div>
+
+        <!-- Gallery -->
+        <div id="gallery" style="display:none;">
+            <h2 id="gallery-title"></h2>
+            <div class="grid" id="gallery-images"></div>
+            <div class="ad-banner" id="gallery-ad">
+                <p>[Ad Banner Placeholder]</p>
+            </div>
+            <button id="back-home">← Back to Home</button>
+        </div>
+    </div>
+
+    <script>
+        // Element references
+        const ageGate = document.getElementById('age-gate');
+        const siteContainer = document.getElementById('site-container');
+        const btnVerify = document.getElementById('btn-verify');
+        const ageInput = document.getElementById('age-input');
+
+        const categoryPreview = document.getElementById('category-preview');
+        const galleryTitle = document.getElementById('gallery-title');
+        const galleryImages = document.getElementById('gallery-images');
+        const homeDiv = document.getElementById('home');
+        const galleryDiv = document.getElementById('gallery');
+        const backHomeBtn = document.getElementById('back-home');
+        const homeAdDiv = document.getElementById('home-ad');
+        const galleryAdDiv = document.getElementById('gallery-ad');
+
+        // Sample gallery data
+        const galleryData = {
+            regular: [
+                { src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&w=800', caption: 'Regular 1' },
+                { src: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&w=800', caption: 'Regular 2' },
+                { src: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&w=800', caption: 'Regular 3' }
+            ],
+            chubby: [
+                { src: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&w=800', caption: 'Chubby 1' },
+                { src: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?auto=format&w=800', caption: 'Chubby 2' },
+                { src: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&w=800', caption: 'Chubby 3' }
+            ],
+            thin: [
+                { src: 'https://images.unsplash.com/photo-1504208434309-cb69f4fe52b0?auto=format&w=800', caption: 'Thin 1' },
+                { src: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&w=800', caption: 'Thin 2' },
+                { src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&w=800', caption: 'Thin 3' }
+            ]
+        };
+
+        // Simulated ads
+        const ads = {
+            home: ['[Ad 1]', '[Ad 2]'],
+            regular: ['[Ad Regular 1]', '[Ad Regular 2]'],
+            chubby: ['[Ad Chubby 1]', '[Ad Chubby 2]'],
+            thin: ['[Ad Thin 1]', '[Ad Thin 2]']
+        };
+
+        let adIndex = 0;
+
+        function rotateAd(element, adList) {
+            element.innerHTML = `<p>${adList[adIndex % adList.length]}</p>`;
+            adIndex++;
+        }
+
+        function showHome() {
+            homeDiv.style.display = 'block';
+            galleryDiv.style.display = 'none';
+            categoryPreview.innerHTML = '';
+            for (const category in galleryData) {
+                galleryData[category].slice(0, 3).forEach(img => {
+                    const card = document.createElement('div');
+                    card.className = 'img-card';
+                    card.innerHTML = `<img src="${img.src}" alt="${img.caption}" loading="lazy" /><p>${img.caption}</p>`;
+                    card.onclick = () => showGallery(category);
+                    categoryPreview.appendChild(card);
+                });
+            }
+            rotateAd(homeAdDiv, ads.home);
+        }
+
+        function showGallery(category) {
+            homeDiv.style.display = 'none';
+            galleryDiv.style.display = 'block';
+            galleryTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+            galleryImages.innerHTML = '';
+            galleryData[category].forEach(img => {
+                const card = document.createElement('div');
+                card.className = 'img-card';
+                card.innerHTML = `<img src="${img.src}" alt="${img.caption}" loading="lazy" /><p>${img.caption}</p>`;
+                galleryImages.appendChild(card);
+            });
+            rotateAd(galleryAdDiv, ads[category]);
+        }
+
+        document.querySelectorAll('nav a').forEach(link => {
+            link.onclick = e => {
+                e.preventDefault();
+                showGallery(link.getAttribute('data-category'));
+            };
+        });
+
+        backHomeBtn.onclick = showHome;
+
+        // Age verification
+        btnVerify.onclick = () => {
+            const age = parseInt(ageInput.value, 10);
+            if (isNaN(age)) {
+                alert("Please enter your age.");
+                return;
+            }
+            if (age >= 18) {
+                localStorage.setItem('ageVerified', 'true');
+                ageGate.classList.add('hidden');
+                siteContainer.style.display = 'flex';
+                showHome();
+            } else {
+                alert('You must be 18 or older to continue.');
+                window.location.href = 'https://www.google.com';
+            }
+        };
+
+        // Auto-verify
+        if (localStorage.getItem('ageVerified') === 'true') {
+            ageGate.classList.add('hidden');
+            siteContainer.style.display = 'flex';
+            showHome();
+        }
+    </script>
+
+</body>
+
+</html>
